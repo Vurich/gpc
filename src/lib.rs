@@ -30,6 +30,7 @@ impl ClipOperation {
     }
 }
 
+#[repr(C)]
 pub struct Vertex(gpc::gpc_vertex);
 
 impl Vertex {
@@ -57,13 +58,10 @@ impl Polygon {
         })
     }
 
-    pub fn add_contour(&mut self, is_hole: bool, vertices: &[Vertex]) {
-        // These don't actually need to be `mut`, but the bindgen-generated code expects *mut _, so
-        // making these mutable is less ugly than coercing `*const` into `*mut`.
-        let mut vertices: Vec<_> = vertices.iter().map(|vertex| vertex.0).collect();
+    pub fn add_contour(&mut self, is_hole: bool, mut vertices: Vec<Vertex>) {
         let mut vertex_list = gpc::gpc_vertex_list {
             num_vertices: vertices.len() as i32,
-            vertex: vertices.as_mut_ptr(),
+            vertex: vertices.as_mut_ptr() as _,
         };
 
         unsafe {
@@ -286,7 +284,7 @@ mod tests {
         let mut polygon1 = Polygon::new();
         polygon1.add_contour(
             false,
-            &[
+            vec![
                 Vertex::new(1.0, 1.0),
                 Vertex::new(0.0, 1.0),
                 Vertex::new(0.0, 0.0),
@@ -297,7 +295,7 @@ mod tests {
         let mut polygon2 = Polygon::new();
         polygon2.add_contour(
             false,
-            &[
+            vec![
                 Vertex::new(1.5, 1.5),
                 Vertex::new(0.5, 1.5),
                 Vertex::new(0.5, 0.5),
@@ -349,7 +347,7 @@ mod tests {
         let mut polygon1 = Polygon::new();
         polygon1.add_contour(
             false,
-            &[
+            vec![
                 Vertex::new(1.0, 1.0),
                 Vertex::new(0.0, 1.0),
                 Vertex::new(0.0, 0.0),
@@ -360,7 +358,7 @@ mod tests {
         let mut polygon2 = Polygon::new();
         polygon2.add_contour(
             false,
-            &[
+            vec![
                 Vertex::new(1.5, 1.5),
                 Vertex::new(0.5, 1.5),
                 Vertex::new(0.5, 0.5),
